@@ -31,18 +31,16 @@ Requires:
 - Node.js `>= 22`
 - `pnpm` available on PATH
 
-### From a tarball
-
-```powershell
-dsh plugin --profile web add .\dsh-read-image-jpeg-fallback-0.1.0.tgz
-```
-
 ### From npm
-
-Once published:
 
 ```powershell
 dsh plugin --profile web add dsh-read-image-jpeg-fallback
+```
+
+### From a tarball
+
+```powershell
+dsh plugin --profile web add .\dsh-read-image-jpeg-fallback-0.1.1.tgz
 ```
 
 Restart DSH Web after installation.
