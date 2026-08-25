@@ -1,6 +1,6 @@
 {
   "name": "dsh-read-image-jpeg-fallback",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH profile plugin: converts read_image PNG/WebP attachments to opaque sRGB JPEG so LM Studio's openai-completions endpoint accepts them",
   "license": "MIT",
   "type": "module",
