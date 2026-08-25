@@ -1,0 +1,36 @@
+{
+  "name": "dsh-read-image-jpeg-fallback",
+  "version": "0.1.0",
+  "description": "DSH profile plugin: converts read_image PNG/WebP attachments to opaque sRGB JPEG so LM Studio's openai-completions endpoint accepts them",
+  "license": "MIT",
+  "type": "module",
+  "main": "jpeg-image-fix.mjs",
+  "exports": {
+    ".": "./jpeg-image-fix.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "jpeg-image-fix.mjs",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "attachment",
+    "image",
+    "jpeg",
+    "lmstudio"
+  ],
+  "dependencies": {
+    "sharp": "^0.35.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
