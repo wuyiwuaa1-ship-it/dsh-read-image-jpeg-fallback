@@ -1,0 +1,16 @@
+# dsh-read-image-jpeg-fallback bundle patch: one host-plane row.
+#
+# Registers the jpeg-image-fix function plugin (tools/post-execute waterfall,
+# prepend, delegate-first). It converts read_image image blocks whose
+# attachment media type is image/png or image/webp into an opaque sRGB JPEG
+# (quality 90) stored through the profile's attachment store, so LM Studio's
+# openai-completions endpoint — which rejects the WebP the built-in save-time
+# normalization emits — receives a JPEG ref instead. Every other media type
+# (JPEG, GIF, ...) passes through untouched.
+#
+# The entry `name` is the bare package name; the cordis plugin loader
+# resolves it from the profile directory's node_modules (pnpm-managed).
+
+- insert:
+    - id: dsh-read-image-jpeg-fallback
+      name: dsh-read-image-jpeg-fallback
