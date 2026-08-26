@@ -1,27 +1,70 @@
 # dsh-read-image-jpeg-fallback
 
-A small DSH profile plugin that converts `read_image` PNG/WebP attachments to JPEG before they are sent to the model.
+A zero-configuration **DSH image compatibility shim** for LM Studio.
 
-It is intended for LM Studio setups where DSH-generated WebP attachments cause:
+It keeps DSH's native `read_image` + multimodal-model flow intact, but transparently converts PNG/WebP tool attachments to opaque sRGB JPEG before the next provider request is built.
+
+Use it when your **main model already supports images**, but LM Studio's `openai-completions` route rejects a DSH image attachment with an error such as:
 
 ```text
 400 'url' field must be a base64 encoded image
 ```
 
+> This is a media-format compatibility plugin, **not** a vision model, OCR plugin, or image-to-text fallback.
+
+## Why this exists
+
+In some DSH + LM Studio paths, `read_image` can produce a PNG/WebP image block that later reaches the provider request in a format LM Studio does not accept.
+
+This plugin fixes only that transport mismatch:
+
+```text
+read_image
+    ↓
+DSH image attachment
+    ↓
+PNG / WebP ?
+    ├─ no  → pass through unchanged
+    └─ yes → opaque sRGB JPEG (quality 90)
+                    ↓
+          same multimodal model
+```
+
+The model still receives the image itself. There is no OCR step, no auxiliary VLM call, and no conversion to a text description.
+
+## What makes it different
+
+| Approach | What happens to the image | Main model path |
+| --- | --- | --- |
+| **This plugin** | PNG/WebP is re-encoded to JPEG | Preserved; the same multimodal model receives the image |
+| Vision fallback plugins | Image is sent to another VLM and usually converted to text | Main model receives a description/result |
+| OCR / image-reader plugins | Image is analyzed by dedicated tools | Main model consumes tool output |
+| Separate LM Studio vision tools | Agent calls a dedicated vision tool/model | Bypasses the native `read_image` → current-model path |
+
+This plugin is intentionally narrow: it is useful when the native DSH vision path is already the behavior you want and only the image encoding is incompatible.
+
 ## What it does
 
-DSH may normalize PNG screenshots into WebP before building the model request.
-
-Some LM Studio `openai-completions` routes reject those WebP image attachments.
-
-This plugin hooks into `read_image` after the tool finishes and converts:
+The plugin hooks into DSH after a successful `read_image` tool call and converts model-visible image blocks as follows:
 
 - `image/png` → opaque sRGB JPEG
 - `image/webp` → opaque sRGB JPEG
+- JPEG and other media types → unchanged
 
-JPEG and other media types are left unchanged.
+It does **not** replace the built-in `read_image` tool or patch DSH core source.
 
-The built-in `read_image` tool itself is not replaced or modified.
+The conversion itself is local. The resulting JPEG then follows your existing DSH/provider request path.
+
+## When to use it
+
+This plugin is a good fit when all of the following are true:
+
+- your selected/main model already supports image input;
+- you use LM Studio through an OpenAI-compatible `openai-completions` route;
+- `read_image` works until the following model request is built, then fails on the image attachment;
+- you want to preserve the native multimodal flow instead of routing the image through another vision model.
+
+You probably do **not** need it if your provider already accepts the image formats DSH sends, or if your main model is text-only and you actually need a vision fallback/OCR solution.
 
 ## Installation
 
@@ -61,27 +104,19 @@ Restart DSH Web after installation.
 
 No configuration is required.
 
-Use `read_image` normally. When its result contains a PNG or WebP attachment, the plugin converts the model-visible image to JPEG before the next provider request is built.
+Use `read_image` normally. When its successful result contains a PNG or WebP image block, the plugin creates a JPEG replacement for the model-visible attachment before the next provider request is built.
 
-```text
-read_image
-    ↓
-DSH attachment
-    ↓
-PNG / WebP ?
-    ├─ no  → pass through
-    └─ yes → opaque sRGB JPEG (quality 90)
-                    ↓
-                 model
-```
+There is no new model-facing tool to learn and no change to the normal agent workflow.
 
 ## Failure behavior
 
-The plugin is designed to fail open.
+The plugin is designed to **fail open**.
 
-If reading, converting, or saving the replacement image fails, the original `read_image` result is preserved and a warning is written to the DSH log.
+If reading, converting, or saving the replacement image fails:
 
-It does not turn a successful tool call into a plugin error.
+- the original `read_image` result is preserved;
+- a warning is written to the DSH log;
+- a successful tool call is not converted into a plugin error.
 
 ## Supported environment
 
@@ -90,16 +125,16 @@ Verified with:
 - DSH `0.1.1-rc.2`
 - LM Studio `openai-completions`
 - Node.js 26.x
-- sharp `0.35.3`
+- `sharp` `0.35.3`
 - Windows
 
-Compatibility with other DSH versions or providers is not guaranteed.
+Compatibility with other DSH versions, operating systems, or providers is not guaranteed unless explicitly tested.
 
 ## Known issue
 
 On some Windows + pnpm setups, removing the plugin may hang after pnpm has already completed its filesystem changes, particularly when `sharp` is being pruned.
 
-If this occurs, pinning sharp directly in the DSH profile avoids the issue:
+If this occurs, pinning `sharp` directly in the DSH profile avoids the issue:
 
 ```powershell
 cd <DSH_HOME>\profiles\web
@@ -126,6 +161,12 @@ For accepted `read_image` results containing PNG or WebP image blocks, it:
 4. replaces only the model-visible image block with the new JPEG reference.
 
 The canonical tool result and built-in `read_image` implementation remain untouched.
+
+## Scope
+
+The goal is deliberately small: provide a transparent image-format compatibility layer until the provider/host path accepts the original media format directly.
+
+If upstream DSH or LM Studio gains equivalent handling, this plugin may become unnecessary for that configuration.
 
 ## License
 
