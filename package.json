@@ -14,6 +14,14 @@
     "cordis.patch.yml",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wuyiwuaa1-ship-it/dsh-read-image-jpeg-fallback.git"
+  },
+  "homepage": "https://github.com/wuyiwuaa1-ship-it/dsh-read-image-jpeg-fallback#readme",
+  "bugs": {
+    "url": "https://github.com/wuyiwuaa1-ship-it/dsh-read-image-jpeg-fallback/issues"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
