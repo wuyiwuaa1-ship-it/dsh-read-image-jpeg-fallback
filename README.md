@@ -37,6 +37,18 @@ Requires:
 dsh plugin --profile web add dsh-read-image-jpeg-fallback
 ```
 
+### From GitHub
+
+```powershell
+dsh plugin --profile web add github:wuyiwuaa1-ship-it/dsh-read-image-jpeg-fallback
+```
+
+To pin the current main branch explicitly:
+
+```powershell
+dsh plugin --profile web add github:wuyiwuaa1-ship-it/dsh-read-image-jpeg-fallback#main
+```
+
 ### From a tarball
 
 ```powershell
